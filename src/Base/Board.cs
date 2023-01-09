@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace UnityChess {
 	/// <summary>An 8x8 matrix representation of a chessboard.</summary>
@@ -125,21 +128,33 @@ namespace UnityChess {
 
 			// 0 1 2 3 4 5
 			// place first rook
-			int firstRookIndex = rand.Next(0, 4); // max value of 4 means there are guaranteed two spots to the right.
+			int firstRookIndex = rand.Next(0, 6);
 			string firstRookFile = filesList[firstRookIndex];
 			layout[4] = (new Square(firstRookFile + "1"), new Rook(Side.White));
 			layout[5] = (new Square(firstRookFile + "8"), new Rook(Side.Black));
 
 			// 0 1 2 3 4 5
 			// place king
-			int kingIndex = rand.Next(firstRookIndex + 1, 5); // will be between first rook and the end, leaving room for other rook.
+			int kingIndex;
+			// There are not enough spaces on the left, king must be on right
+			if (firstRookIndex <= 1) kingIndex = rand.Next(firstRookIndex + 1, 5);
+			// There are not enough spaces on the right, king must be on the left.
+			else if (firstRookIndex >= 4) kingIndex = rand.Next(1, firstRookIndex);
+			else // King can be placed on either side.
+			{
+				kingIndex = firstRookIndex;
+				while (kingIndex == firstRookIndex) kingIndex = rand.Next(1, filesList.Count-1);
+			}
 			string kingFile = filesList[kingIndex];
 			layout[6] = (new Square(kingFile + "1"), new King(Side.White));
 			layout[7] = (new Square(kingFile + "8"), new King(Side.Black));
 
 			// 0 1 2 3 4 5
 			// place second rook
-			string secondRookFile = filesList[rand.Next(kingIndex + 1, 6)];
+			int secondRookIndex;
+			if (kingIndex < firstRookIndex) secondRookIndex = rand.Next(0, kingIndex);
+			else secondRookIndex = rand.Next(kingIndex+1, filesList.Count);
+			string secondRookFile = filesList[secondRookIndex];
 			filesList.Remove(kingFile);
 			filesList.Remove(firstRookFile);
 			filesList.Remove(secondRookFile);
